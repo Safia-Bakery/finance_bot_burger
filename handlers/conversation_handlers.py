@@ -55,9 +55,9 @@ async def user_reg(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     if context.user_data["client"]["fullname"] is None and "phone" not in context.user_data["client"]:
         context.user_data["client"]["fullname"] = user_input
         await update.message.reply_text(
-            text='Укажите свой номер в формате: 998933886989',
+            text='Укажите свой номер в формате: 998933886989 или нажмите кнопку "Поделиться контактом ☎️"',
             reply_markup=ReplyKeyboardMarkup(keyboard=[[
-                KeyboardButton(text="Номер телефона ☎️", request_contact=True)
+                KeyboardButton(text="Поделиться контактом ☎️", request_contact=True)
             ]], resize_keyboard=True)
         )
         context.user_data["client"]["phone"] = None
@@ -71,9 +71,9 @@ async def user_reg(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
                 context.user_data["client"]["phone"] = user_input
             else:
                 await update.message.reply_text(
-                    text='Укажите свой номер в формате: 998933886989',
+                    text='Укажите свой номер в формате: 998933886989 или нажмите кнопку "Поделиться контактом ☎️"',
                     reply_markup=ReplyKeyboardMarkup(keyboard=[[
-                        KeyboardButton(text="Номер телефона ☎️", request_contact=True)
+                        KeyboardButton(text="Поделиться контактом ☎️", request_contact=True)
                     ]], resize_keyboard=True)
                 )
                 context.user_data["client"]["phone"] = None
@@ -209,9 +209,9 @@ async def my_requests_handler(update: Update, context: ContextTypes.DEFAULT_TYPE
         f"Отдел: {request['department']['name']}\n"
         f"Заказчик: {request['client']['fullname']}\n"
         f"Номер заказчика: {request['client']['phone']}\n"
-        f"Закупщик: {request['buyer']['name']}\n"
+        f"Закупщик: {request['buyer']}\n"
         f"Тип затраты: {request['expense_type']['name']}\n"
-        f"Поставщик:  {request['supplier']['name']}\n\n"
+        f"Поставщик:  {request['supplier']}\n\n"
         f"Стоимость: {request['sum']} сум\n"
         f"Тип оплаты: {request['payment_type']['name']}\n"
         f"Карта перевода: {request['payment_card']}\n"
@@ -499,10 +499,10 @@ async def sap_code_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         f"Закупщик: {request['buyer_name']}\n"
         f"Тип затраты: {request['expense_type_name']}\n"
         f"Поставщик:  {request['supplier_name']}\n\n"
-        f"Стоимость: {request['sum']} сум\n"
+        f"Стоимость: {int(request['sum'])} сум\n"
         f"Тип оплаты: {request['payment_type_name']}\n"
         f"Карта перевода: {request.get('payment_card', '')}\n"
-        f"Дата заявки: {datetime.now().date().strftime('DD.MM.YYYY')}\n"
+        f"Дата заявки: {datetime.now().date().strftime('%d.%m.%Y')}\n"
         f"№ Заявки в SAP:   {request['sap_code']}\n\n"
         f"Комментарии:  {request['description']}"
     )
@@ -523,6 +523,12 @@ async def confirmation_handler(update: Update, context: ContextTypes.DEFAULT_TYP
         return SAP_CODE
 
     elif confirmation == "Подтвердить":
+        keyboard = (await client_keyboards.home_keyboard())
+        await update.message.reply_text(
+            text=keyboard['text'],
+            reply_markup=keyboard['markup']
+        )
+
         data = context.user_data["new_request"]
         response = api_routes.create_request(body=data)
         if response.status_code == 200:
@@ -531,36 +537,36 @@ async def confirmation_handler(update: Update, context: ContextTypes.DEFAULT_TYP
             await update.message.reply_text(text)
 
             request_text = (
+                f"Номер заявки:  {request['number']}\n\n"
                 f"Отдел: {request['department']['name']}\n"
                 f"Заказчик: {request['client']['fullname']}\n"
                 f"Номер заказчика: {request['client']['phone']}\n"
                 f"Закупщик: {request['buyer']}\n"
                 f"Тип затраты: {request['expense_type']['name']}\n"
                 f"Поставщик:  {request['supplier']}\n\n"
-                f"Стоимость: {request['sum']} сум\n"
+                f"Стоимость: {int(request['sum'])} сум\n"
                 f"Тип оплаты: {request['payment_type']['name']}\n"
-                f"Карта перевода: {request['payment_card']}\n"
-                f"Дата заявки: {request['created_at']}\n"
+                f"Карта перевода: {request['payment_card'] if request['payment_card'] is not None else ''}\n"
+                f"Дата заявки: {datetime.strptime(request['created_at'], '%Y-%m-%dT%H:%M:%S.%fZ').strftime('%d.%m.%Y')}\n"
                 f"№ Заявки в SAP:   {request['sap_code']}\n\n"
                 f"Комментарии:  {request['description']}"
             )
-            await context.bot.send_message(
-                chat_id=request["department"]["head"]["tg_id"],
-                text=request_text,
-                reply_markup=InlineKeyboardMarkup(
-                    inline_keyboard=[
-                        [
-                            InlineKeyboardButton(text="Да", callback_data=f"{request['id']}")
+            try:
+                await context.bot.send_message(
+                    chat_id=request["department"]["head"]["tg_id"],
+                    text=request_text,
+                    reply_markup=InlineKeyboardMarkup(
+                        inline_keyboard=[
+                            [
+                                InlineKeyboardButton(text="Подтвердить", callback_data="confirm"),
+                                InlineKeyboardButton(text="Отказать", callback_data="refuse"),
+                            ]
                         ]
-                    ]
+                    )
                 )
-            )
-            keyboard = (await client_keyboards.home_keyboard())
-            await update.message.reply_text(
-                text=keyboard['text'],
-                reply_markup=keyboard['markup']
-            )
-            return HOME
+            except Exception as e:
+                print(e)
         else:
-            await update.message.reply_text(text="Что-то пошло не так, отправьте заново заявку, после отправки команды /start")
+            await update.message.reply_text(text="Что-то пошло не так, отправьте заявку заново !")
 
+        return HOME

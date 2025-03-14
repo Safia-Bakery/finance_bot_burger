@@ -3,7 +3,7 @@ from telegram.ext import Application, CommandHandler, InlineQueryHandler, Conver
 from configs.variables import BOT_TOKEN
 from handlers.command_handlers import help_command, custom_command, start_command
 from handlers.conversation_handlers import *
-from handlers.inline_handlers import handle_callback_query
+from handlers.callback_handlers import handle_callback_query
 
 
 # from handlers.inline_handlers import inline_handler

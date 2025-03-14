@@ -100,9 +100,17 @@ class ApiRoutes:
         response = requests.post(f"{self.base_url}/requests", headers=self.headers, json=body)
         return response
 
-    def get_requests(self, client_id, status):
+    def get_requests(self, client_id: Optional[str]=None, status: Optional[str]=None, number: Optional[int]=None):
+        params = {}
+        if client_id is not None:
+            params['client_id'] = client_id
+        if status is not None:
+            params['status'] = status
+        if number is not None:
+            params['number'] = number
+
         response = requests.get(f"{self.base_url}/requests", headers=self.headers,
-                                params={'client_id': client_id, 'status': status})
+                                params=params)
         return response
 
     def update_request(self, body):
