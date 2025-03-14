@@ -13,6 +13,7 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
     context.user_data["client"]["tg_id"] = tg_id
     context.user_data["client"]["language"] = "ru"
     if client:
+        client = client[0]
         context.user_data["client"]["id"] = client["id"]
         context.user_data["client"]["fullname"] = client["fullname"]
         context.user_data["client"]["phone"] = client["phone"]
