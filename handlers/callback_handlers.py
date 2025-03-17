@@ -126,3 +126,5 @@ async def handle_callback_query(update: Update, context: ContextTypes.DEFAULT_TY
                 )
             except Exception as e:
                 print(e)
+        else:
+            print("Error: ", response.text)
