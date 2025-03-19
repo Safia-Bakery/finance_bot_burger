@@ -28,7 +28,7 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> U
             )
             return HOME
         else:
-            await update.message.reply_text("Вы заблокированы, обратитесь Сис.Админу")
+            await update.message.reply_text("Вы заблокированы. Обратитесь в финансовый отдел.")
             return None
     else:
         await update.message.reply_text(

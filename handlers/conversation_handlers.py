@@ -206,19 +206,19 @@ async def my_requests_handler(update: Update, context: ContextTypes.DEFAULT_TYPE
     response = api_routes.get_requests(client_id=context.user_data["client"]["id"], status=status)
     requests = response.json()["items"]
     request_messages = [
-        f"Номер заявки: {request['number']}\n"
-        f"Отдел: {request['department']['name']}\n"
-        f"Заказчик: {request['client']['fullname']}\n"
-        f"Номер заказчика: {request['client']['phone']}\n"
-        f"Закупщик: {request['buyer']}\n"
-        f"Тип затраты: {request['expense_type']['name']}\n"
-        f"Поставщик:  {request['supplier']}\n\n"
-        f"Стоимость: {request['sum']} сум\n"
-        f"Тип оплаты: {request['payment_type']['name']}\n"
-        f"Карта перевода: {request['payment_card']}\n"
-        f"Дата заявки: {datetime.strptime(request['created_at'], '%Y-%m-%dT%H:%M:%S.%fZ').strftime('%d.%m.%Y')}\n"
-        f"№ Заявки в SAP: {request['sap_code']}\n\n"
-        f"Комментарии: {request['description']}"
+        f"📌 Заявка #{request['number']}s\n\n"
+        f"📅 Дата заявки: {datetime.strptime(request['created_at'], '%Y-%m-%dT%H:%M:%S.%fZ').strftime('%d.%m.%Y')}\n"
+        f"📍 Отдел: {request['department']['name']}\n"
+        f"👤 Заказчик: {request['client']['fullname']}\n"
+        f"📞 Номер заказчика: {request['client']['phone']}\n"
+        f"🛒 Закупщик: {request['buyer']}\n"
+        f"💰 Тип затраты: {request['expense_type']['name']}\n"
+        f"🏢 Поставщик: {request['supplier']}\n\n"
+        f"💲 Стоимость: {int(request['sum'])} сум\n"
+        f"💳 Тип оплаты: {request['payment_type']['name']}\n"
+        f"💳 Карта перевода: {request['payment_card'] if request['payment_card'] is not None else ''}\n"
+        f"📜 № Заявки в SAP: {request['sap_code']}\n\n"
+        f"📝 Комментарии: {request['description']}"
         for request in requests
     ]
     for message in request_messages:
@@ -501,18 +501,18 @@ async def sap_code_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     )
     request = context.user_data["request_details"]
     request_text = (
-        f"Отдел: {request['department_name']}\n"
-        f"Заказчик: {context.user_data['client']['fullname']}\n"
-        f"Номер заказчика: {context.user_data['client']['phone']}\n"
-        f"Закупщик: {request['buyer_name']}\n"
-        f"Тип затраты: {request['expense_type_name']}\n"
-        f"Поставщик:  {request['supplier_name']}\n\n"
-        f"Стоимость: {int(request['sum'])} сум\n"
-        f"Тип оплаты: {request['payment_type_name']}\n"
-        f"Карта перевода: {request.get('payment_card', '')}\n"
-        f"Дата заявки: {datetime.now().date().strftime('%d.%m.%Y')}\n"
-        f"№ Заявки в SAP:   {request['sap_code']}\n\n"
-        f"Комментарии:  {request['description']}"
+        f"📅 Дата заявки: {datetime.now().date().strftime('%d.%m.%Y')}\n"
+        f"📍 Отдел: {request['department_name']}\n"
+        f"👤 Заказчик: {context.user_data['client']['fullname']}\n"
+        f"📞 Номер заказчика: {context.user_data['client']['phone']}\n"
+        f"🛒 Закупщик: {request['buyer_name']}\n"
+        f"💰 Тип затраты: {request['expense_type_name']}\n"
+        f"🏢 Поставщик: {request['supplier_name']}\n\n"
+        f"💲 Стоимость: {int(request['sum'])} сум\n"
+        f"💳 Тип оплаты: {request['payment_type_name']}\n"
+        f"💳 Карта перевода: {request.get('payment_card', '')}\n"
+        f"📜 № Заявки в SAP: {request['sap_code']}\n\n"
+        f"📝 Комментарии: {request['description']}"
     )
     await update.message.reply_text(
         text=request_text,
@@ -545,19 +545,19 @@ async def confirmation_handler(update: Update, context: ContextTypes.DEFAULT_TYP
             await update.message.reply_text(text)
 
             request_text = (
-                f"Номер заявки:  {request['number']}\n\n"
-                f"Отдел: {request['department']['name']}\n"
-                f"Заказчик: {request['client']['fullname']}\n"
-                f"Номер заказчика: {request['client']['phone']}\n"
-                f"Закупщик: {request['buyer']}\n"
-                f"Тип затраты: {request['expense_type']['name']}\n"
-                f"Поставщик:  {request['supplier']}\n\n"
-                f"Стоимость: {int(request['sum'])} сум\n"
-                f"Тип оплаты: {request['payment_type']['name']}\n"
-                f"Карта перевода: {request['payment_card'] if request['payment_card'] is not None else ''}\n"
-                f"Дата заявки: {datetime.strptime(request['created_at'], '%Y-%m-%dT%H:%M:%S.%fZ').strftime('%d.%m.%Y')}\n"
-                f"№ Заявки в SAP:   {request['sap_code']}\n\n"
-                f"Комментарии:  {request['description']}"
+                f"📌 Заявка #{request['number']}s\n\n"
+                f"📅 Дата заявки: {datetime.strptime(request['created_at'], '%Y-%m-%dT%H:%M:%S.%fZ').strftime('%d.%m.%Y')}\n"
+                f"📍 Отдел: {request['department']['name']}\n"
+                f"👤 Заказчик: {request['client']['fullname']}\n"
+                f"📞 Номер заказчика: {request['client']['phone']}\n"
+                f"🛒 Закупщик: {request['buyer']}\n"
+                f"💰 Тип затраты: {request['expense_type']['name']}\n"
+                f"🏢 Поставщик: {request['supplier']}\n\n"
+                f"💲 Стоимость: {int(request['sum'])} сум\n"
+                f"💳 Тип оплаты: {request['payment_type']['name']}\n"
+                f"💳 Карта перевода: {request['payment_card'] if request['payment_card'] is not None else ''}\n"
+                f"📜 № Заявки в SAP: {request['sap_code']}\n\n"
+                f"📝 Комментарии: {request['description']}"
             )
             try:
                 await context.bot.send_message(

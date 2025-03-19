@@ -35,8 +35,9 @@ def main() -> None:
             SUM: [MessageHandler(filters.TEXT & ~filters.COMMAND, sum_handler)],
             PAYMENT_TYPE: [MessageHandler(filters.TEXT & ~filters.COMMAND, payment_type_handler)],
             PAYMENT_DETAIL: [
-                MessageHandler(filters.Document.FileExtension("pdf") | filters.Document.FileExtension("png") | filters.Document.FileExtension("docx"), payment_detail_handler),
+                # MessageHandler(filters.Document.FileExtension("pdf") | filters.Document.FileExtension("png") | filters.Document.FileExtension("docx"), payment_detail_handler),
                 # MessageHandler(filters.Document.PDF | filters.Document.IMAGE | filters.Document.DOCX, payment_detail_handler),
+                MessageHandler(filters.Document.ALL, payment_detail_handler),
                 MessageHandler(filters.PHOTO, payment_detail_handler),
                 MessageHandler(filters.TEXT & ~filters.COMMAND, payment_detail_handler),
             ],
