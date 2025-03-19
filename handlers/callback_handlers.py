@@ -51,8 +51,8 @@ async def handle_callback_query(update: Update, context: ContextTypes.DEFAULT_TY
     query = update.callback_query
     callback_data = query.data
 
-    # Use regex to find the request number
-    match = re.search(r"Номер заявки:\s+(\d+)", query.message.text)
+    # Use regex to find the request number after "📌 Заявка #"
+    match = re.search(r"📌 Заявка #(\d+)s", query.message.text)
     request_number = match.group(1)
 
     response = api_routes.get_requests(number=request_number)
