@@ -1,6 +1,8 @@
 from typing import Optional
 from uuid import UUID
 import requests
+import httpx
+from urllib.parse import quote
 from configs.variables import BASE_URL, BOT_USER, BOT_PASSWORD
 
 
@@ -91,10 +93,10 @@ class ApiRoutes:
             response = requests.get(f"{self.base_url}/payment-types", headers=self.headers)
         return response.json()
 
-    def upload_files(self, files):
+    def upload_files(self, files,file_name):
         # self.headers["Content-Type"] = "multipart/form-data"
-        print("passed files: ", files)
-        response = requests.post(f"{self.base_url}/files/upload/bot", headers=self.headers, files=files)
+        self.headers['filename'] = quote(file_name)
+        response = requests.post(f"{self.base_url}/files/upload/bot/2", headers=self.headers, files=files)
         return response
 
     def create_request(self, body):

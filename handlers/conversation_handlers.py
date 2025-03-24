@@ -511,9 +511,9 @@ async def contract_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         binary_data = await file.download_as_bytearray()  # Download file as binary data
         # Prepare file for upload
         files = {
-            "file": (file_name, binary_data, mime_type)
+            "file":  binary_data
         }
-        response = api_routes.upload_files(files=files)
+        response = api_routes.upload_files(files=files,file_name=file_name)
         if response.status_code == 200:
             print(f"Uploading file: {file_name}, Size: {len(binary_data)}, MIME: {mime_type}")
             print("Successfuly uploading file: ", response.text)
