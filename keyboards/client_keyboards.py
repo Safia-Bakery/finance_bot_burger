@@ -52,7 +52,10 @@ async def expense_types_keyboard(department_id):
     for i in range(0, len(objs), 3):
         reply_keyboard.append(objs[i: i+3])
 
-    text = "Укажите тип затраты"
+    if objs:
+        text = "Укажите тип затраты"
+    else:
+        text = "Бюджет вашего отдела пустой !\nСвяжитесь с финансовым отделом."
     reply_markup = ReplyKeyboardMarkup(reply_keyboard, resize_keyboard=True, one_time_keyboard=True)
     data_dict = {'text': text, 'markup': reply_markup}
     return data_dict

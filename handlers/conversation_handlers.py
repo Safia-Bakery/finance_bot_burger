@@ -12,7 +12,7 @@ from telegram import (
 )
 from telegram.ext import ContextTypes
 
-from configs.variables import APPROVE_GROUP
+from configs.variables import APPROVE_GROUP, BASE_URL
 from keyboards import client_keyboards
 from utils.api_requests import api_routes
 from utils.utils import format_phone_number, error_sender
@@ -597,6 +597,7 @@ async def sap_code_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         f"💰 Тип затраты: {request['expense_type_name']}\n"
         f"🏢 Поставщик: {request['supplier_name']}\n\n"
         f"💲 Стоимость: {int(request['sum'])} сум\n"
+        f"💲 Запрошенная сумма в валюте: {(request['sum'] / request['exchange_rate']) if request.get('exchange_rate', None) is not None else request['sum']}\n"
         f"💵 Валюта: {request['currency']}\n"
         f"📈 Курс валюты: {request['exchange_rate']}\n"
         f"💳 Тип оплаты: {request['payment_type_name']}\n"
@@ -663,6 +664,7 @@ async def confirmation_handler(update: Update, context: ContextTypes.DEFAULT_TYP
                 f"💰 Тип затраты: {request['expense_type']['name']}\n"
                 f"🏢 Поставщик: {request['supplier']}\n\n"
                 f"💲 Стоимость: {int(request['sum'])} сум\n"
+                f"💲 Запрошенная сумма в валюте: {(request['sum'] / request['exchange_rate']) if request.get('exchange_rate', None) is not None else request['sum']}\n"
                 f"💵 Валюта: {request['currency']}\n"
                 f"📈 Курс валюты: {request['exchange_rate']}\n"
                 f"💳 Тип оплаты: {request['payment_type']['name']}\n"
@@ -670,42 +672,89 @@ async def confirmation_handler(update: Update, context: ContextTypes.DEFAULT_TYP
                 f"📜 № Заявки в SAP: {request['sap_code']}\n\n"
                 f"📝 Комментарии: {request['description']}"
             )
-            try:
-                if context.user_data["request_details"]["send_ceo"] == True:
+            if context.user_data["request_details"]["send_ceo"] == True:
+                try:
                     await update.message.reply_text(
                         text="Не осталось бюджетных средств, и заявка будет отправлена Гендиректору.\n"
                              "В случае одобрения будут выделены средства сверх бюджета !"
                     )
-                    await context.bot.send_message(
-                        chat_id=APPROVE_GROUP,  # WHERE CEO CAN APPROVE
-                        text=request_text,
-                        reply_markup=InlineKeyboardMarkup(
-                            inline_keyboard=[
-                                [
-                                    InlineKeyboardButton(text="Подтвердить", callback_data="confirm"),
-                                    InlineKeyboardButton(text="Отказать", callback_data="refuse"),
+                    chat_id = APPROVE_GROUP
+                    if request["contract"]:
+                        files = request["contract"]["file"]
+                        for file in files:
+                            file_paths = file["file_paths"]
+                            for file_path in file_paths:
+                                with open(f"{BASE_URL}/{file_path}", "rb") as f:
+                                    # Prepare data and files
+                                    await context.bot.send_document(
+                                        chat_id=chat_id,
+                                        caption=request_text,
+                                        document=f,
+                                        reply_markup=InlineKeyboardMarkup(
+                                            inline_keyboard=[
+                                                [
+                                                    InlineKeyboardButton(text="Подтвердить", callback_data="confirm"),
+                                                    InlineKeyboardButton(text="Отказать", callback_data="refuse"),
+                                                ]
+                                            ]
+                                        )
+                                    )
+                    else:
+                        await context.bot.send_message(
+                            chat_id=chat_id,  # WHERE CEO CAN APPROVE
+                            text=request_text,
+                            reply_markup=InlineKeyboardMarkup(
+                                inline_keyboard=[
+                                    [
+                                        InlineKeyboardButton(text="Подтвердить", callback_data="confirm"),
+                                        InlineKeyboardButton(text="Отказать", callback_data="refuse"),
+                                    ]
                                 ]
-                            ]
+                            )
                         )
-                    )
-                else:
+                except Exception as e:
+                    error_sender(error_message=f"ERROR sending notification with contract file to CEO group: {e}")
+            else:
+                try:
                     text = f"Ваша заявка #{request['number']}s принята на обработку, как финансовый отдел примет её, вы получите срок оплаты"
                     await update.message.reply_text(text)
-                    await context.bot.send_message(
-                        chat_id=request["department"]["head"]["tg_id"],
-                        text=request_text,
-                        reply_markup=InlineKeyboardMarkup(
-                            inline_keyboard=[
-                                [
-                                    InlineKeyboardButton(text="Подтвердить", callback_data="confirm"),
-                                    InlineKeyboardButton(text="Отказать", callback_data="refuse"),
+                    chat_id = request["department"]["head"]["tg_id"]
+                    if request["contract"]:
+                        files = request["contract"]["file"]
+                        for file in files:
+                            file_paths = file["file_paths"]
+                            for file_path in file_paths:
+                                with open(f"{BASE_URL}/{file_path}", "rb") as f:
+                                    # Prepare data and files
+                                    await context.bot.send_document(
+                                        chat_id=chat_id,
+                                        caption=request_text,
+                                        document=f,
+                                        reply_markup=InlineKeyboardMarkup(
+                                            inline_keyboard=[
+                                                [
+                                                    InlineKeyboardButton(text="Подтвердить", callback_data="confirm"),
+                                                    InlineKeyboardButton(text="Отказать", callback_data="refuse"),
+                                                ]
+                                            ]
+                                        )
+                                    )
+                    else:
+                        await context.bot.send_message(
+                            chat_id=chat_id,
+                            text=request_text,
+                            reply_markup=InlineKeyboardMarkup(
+                                inline_keyboard=[
+                                    [
+                                        InlineKeyboardButton(text="Подтвердить", callback_data="confirm"),
+                                        InlineKeyboardButton(text="Отказать", callback_data="refuse"),
+                                    ]
                                 ]
-                            ]
+                            )
                         )
-                    )
+                except Exception as e:
+                    error_sender(error_message=f"ERROR sending notification with contract file to head of department: {e}")
 
-            except Exception as e:
-                error_sender(error_message=f"ERROR sending notification to head or CEO group: {e}")
 
         else:
             error_sender(error_message=f"FINANCE BOT: \n{response.text}")

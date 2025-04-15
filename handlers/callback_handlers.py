@@ -58,6 +58,7 @@ async def handle_callback_query(update: Update, context: ContextTypes.DEFAULT_TY
     callback_data = query.data
     chat_type = str(query.message.chat.type)
     tg_id = query.from_user.id
+    message_text = query.message.text or query.message.caption
 
     if chat_type in ["group", "supergroup"]:
         if tg_id != CEO:
@@ -65,7 +66,7 @@ async def handle_callback_query(update: Update, context: ContextTypes.DEFAULT_TY
             return None
 
     # Use regex to find the request number after "📌 Заявка #"
-    match = re.search(r"📌 Заявка #(\d+)s", query.message.text)
+    match = re.search(r"📌 Заявка #(\d+)s", message_text)
     request_number = match.group(1)
 
     response = api_routes.get_requests(number=request_number)
@@ -106,12 +107,18 @@ async def handle_callback_query(update: Update, context: ContextTypes.DEFAULT_TY
         if response.status_code == 200:
             request = response.json()
             await query.answer(text="Заявка отменена 🚫", show_alert=True)
-            request_text = query.message.text
-            await query.edit_message_text(
-                text=f"{request_text}\n\n"
-                     f"Отказано 🚫",
-                reply_markup=None
-            )
+            request_text = (f"{message_text}\n\n"
+                            f"Отказано 🚫")
+            if query.message.text:
+                await query.edit_message_text(
+                    text=request_text,
+                    reply_markup=None
+                )
+            elif query.message.caption:
+                await query.edit_message_caption(
+                    caption=request_text,
+                    reply_markup=None
+                )
             try:
                 await context.bot.send_message(
                     chat_id=request["client"]["tg_id"],
@@ -136,13 +143,18 @@ async def handle_callback_query(update: Update, context: ContextTypes.DEFAULT_TY
         if response.status_code == 200:
             request = response.json()
             await query.answer(text="Заявка одобрена ✅", show_alert=True)
-            # await query.edit_message_reply_markup(reply_markup=None)
-            request_text = query.message.text
-            await query.edit_message_text(
-                text=f"{request_text}\n\n"
-                     f"Подтверждено ✅",
-                reply_markup=None
-            )
+            request_text = (f"{message_text}\n\n"
+                            f"Подтверждено ✅")
+            if query.message.text:
+                await query.edit_message_text(
+                    text=request_text,
+                    reply_markup=None
+                )
+            elif query.message.caption:
+                await query.edit_message_caption(
+                    caption=request_text,
+                    reply_markup=None
+                )
             try:
                 await context.bot.send_message(
                     chat_id=request["client"]["tg_id"],
@@ -201,6 +213,7 @@ async def my_requests_handler(update: Update, context: ContextTypes.DEFAULT_TYPE
         f"💰 Тип затраты: {request['expense_type']['name']}\n"
         f"🏢 Поставщик: {request['supplier']}\n\n"
         f"💲 Стоимость: {int(request['sum'])} сум\n"
+        f"💲 Запрошенная сумма в валюте: {(float(request['sum']) / float(request['exchange_rate'])) if request.get('exchange_rate', None) is not None else request['sum']}\n"
         f"💵 Валюта: {request.get('currency', '')}\n"
         f"📈 Курс валюты: {request.get('exchange_rate', '')}\n"
         f"💳 Тип оплаты: {request['payment_type']['name']}\n"
