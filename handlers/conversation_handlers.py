@@ -684,21 +684,21 @@ async def confirmation_handler(update: Update, context: ContextTypes.DEFAULT_TYP
                         for file in files:
                             file_paths = file["file_paths"]
                             for file_path in file_paths:
-                                with open(f"{BASE_URL}/{file_path}", "rb") as f:
+                                # with open(f"{BASE_URL}/{file_path}", "rb") as f:
                                     # Prepare data and files
-                                    await context.bot.send_document(
-                                        chat_id=chat_id,
-                                        caption=request_text,
-                                        document=f,
-                                        reply_markup=InlineKeyboardMarkup(
-                                            inline_keyboard=[
-                                                [
-                                                    InlineKeyboardButton(text="Подтвердить", callback_data="confirm"),
-                                                    InlineKeyboardButton(text="Отказать", callback_data="refuse"),
-                                                ]
+                                await context.bot.send_document(
+                                    chat_id=chat_id,
+                                    caption=request_text,
+                                    document=f"{BASE_URL}/{file_path}",
+                                    reply_markup=InlineKeyboardMarkup(
+                                        inline_keyboard=[
+                                            [
+                                                InlineKeyboardButton(text="Подтвердить", callback_data="confirm"),
+                                                InlineKeyboardButton(text="Отказать", callback_data="refuse"),
                                             ]
-                                        )
+                                        ]
                                     )
+                                )
                     else:
                         await context.bot.send_message(
                             chat_id=chat_id,  # WHERE CEO CAN APPROVE
@@ -724,21 +724,21 @@ async def confirmation_handler(update: Update, context: ContextTypes.DEFAULT_TYP
                         for file in files:
                             file_paths = file["file_paths"]
                             for file_path in file_paths:
-                                with open(f"{BASE_URL}/{file_path}", "rb") as f:
+                                # with open(f"{BASE_URL}/{file_path}", "rb") as f:
                                     # Prepare data and files
-                                    await context.bot.send_document(
-                                        chat_id=chat_id,
-                                        caption=request_text,
-                                        document=f,
-                                        reply_markup=InlineKeyboardMarkup(
-                                            inline_keyboard=[
-                                                [
-                                                    InlineKeyboardButton(text="Подтвердить", callback_data="confirm"),
-                                                    InlineKeyboardButton(text="Отказать", callback_data="refuse"),
-                                                ]
+                                await context.bot.send_document(
+                                    chat_id=chat_id,
+                                    caption=request_text,
+                                    document=f"{BASE_URL}/{file_path}",
+                                    reply_markup=InlineKeyboardMarkup(
+                                        inline_keyboard=[
+                                            [
+                                                InlineKeyboardButton(text="Подтвердить", callback_data="confirm"),
+                                                InlineKeyboardButton(text="Отказать", callback_data="refuse"),
                                             ]
-                                        )
+                                        ]
                                     )
+                                )
                     else:
                         await context.bot.send_message(
                             chat_id=chat_id,
