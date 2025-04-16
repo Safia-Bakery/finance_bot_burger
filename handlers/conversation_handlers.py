@@ -351,39 +351,74 @@ async def currency_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     elif currency == "Рубль":
         ccy = "RUB"
 
-    currency_response = requests.get(f"https://cbu.uz/uz/arkhiv-kursov-valyut/json/")
-    if currency_response.status_code == 200:
-        cbu_currencies = currency_response.json()
-        # print(cbu_currencies)
-        exchange_rate = None
-        # Get the dictionary where "Ccy" is ccy
-        if currency != "Сум":
+    exchange_rate = None
+
+    if currency != "Сум":
+        currency_response = requests.get(f"https://cbu.uz/uz/arkhiv-kursov-valyut/json/")
+        if currency_response.status_code == 200:
+            cbu_currencies = currency_response.json()
             currency_dict = next((item for item in cbu_currencies if item["Ccy"] == ccy), None)
             exchange_rate = float(currency_dict["Rate"])
 
+        else:
+            error_sender(error_message=currency_response.text)
+            await update.message.reply_text(
+                text="Что-то пошло не так, выберите заново валюту!"
+            )
+            keyboard = (await client_keyboards.currency_keyboard())
+            await update.message.reply_text(
+                text=keyboard['text'],
+                reply_markup=keyboard['markup']
+            )
+            return CURRENCY
 
-        context.user_data["new_request"]["currency"] = currency
-        context.user_data["new_request"]["exchange_rate"] = exchange_rate
-        context.user_data["request_details"]["currency"] = currency
-        context.user_data["request_details"]["exchange_rate"] = exchange_rate
 
-        await update.message.reply_text(
-            text='Укажите сумму в числах',
-            reply_markup=ReplyKeyboardMarkup(keyboard=[["Назад ⬅️"]], resize_keyboard=True, one_time_keyboard=True)
-        )
-        return SUM
+    context.user_data["new_request"]["currency"] = currency
+    context.user_data["new_request"]["exchange_rate"] = exchange_rate
+    context.user_data["request_details"]["currency"] = currency
+    context.user_data["request_details"]["exchange_rate"] = exchange_rate
 
-    else:
-        error_sender(error_message=currency_response.text)
-        await update.message.reply_text(
-            text="Что-то пошло не так, выберите заново валюту!"
-        )
-        keyboard = (await client_keyboards.currency_keyboard())
-        await update.message.reply_text(
-            text=keyboard['text'],
-            reply_markup=keyboard['markup']
-        )
-        return CURRENCY
+    await update.message.reply_text(
+        text='Укажите сумму в числах',
+        reply_markup=ReplyKeyboardMarkup(keyboard=[["Назад ⬅️"]], resize_keyboard=True, one_time_keyboard=True)
+    )
+    return SUM
+
+
+
+    # currency_response = requests.get(f"https://cbu.uz/uz/arkhiv-kursov-valyut/json/")
+    # if currency_response.status_code == 200:
+    #     cbu_currencies = currency_response.json()
+    #     # print(cbu_currencies)
+    #     exchange_rate = None
+    #     # Get the dictionary where "Ccy" is ccy
+    #     if currency != "Сум":
+    #         currency_dict = next((item for item in cbu_currencies if item["Ccy"] == ccy), None)
+    #         exchange_rate = float(currency_dict["Rate"])
+    #
+    #
+    #     context.user_data["new_request"]["currency"] = currency
+    #     context.user_data["new_request"]["exchange_rate"] = exchange_rate
+    #     context.user_data["request_details"]["currency"] = currency
+    #     context.user_data["request_details"]["exchange_rate"] = exchange_rate
+    #
+    #     await update.message.reply_text(
+    #         text='Укажите сумму в числах',
+    #         reply_markup=ReplyKeyboardMarkup(keyboard=[["Назад ⬅️"]], resize_keyboard=True, one_time_keyboard=True)
+    #     )
+    #     return SUM
+    #
+    # else:
+    #     error_sender(error_message=currency_response.text)
+    #     await update.message.reply_text(
+    #         text="Что-то пошло не так, выберите заново валюту!"
+    #     )
+    #     keyboard = (await client_keyboards.currency_keyboard())
+    #     await update.message.reply_text(
+    #         text=keyboard['text'],
+    #         reply_markup=keyboard['markup']
+    #     )
+    #     return CURRENCY
 
 
 
@@ -588,6 +623,12 @@ async def sap_code_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     context.user_data["request_details"]["sap_code"] = sap_code
 
     request = context.user_data["request_details"]
+    request_sum = format(int(request['sum']), ',').replace(',', ' ')
+    if request.get('exchange_rate', None) is not None:
+        requested_currency = format((request['sum'] / request['exchange_rate']), ',').replace(',', ' ')
+    else:
+        requested_currency = request_sum
+
     request_text = (
         f"📅 Дата заявки: {datetime.now().date().strftime('%d.%m.%Y')}\n"
         f"📍 Отдел: {request['department_name']}\n"
@@ -596,8 +637,8 @@ async def sap_code_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         f"🛒 Закупщик: {request['buyer_name']}\n"
         f"💰 Тип затраты: {request['expense_type_name']}\n"
         f"🏢 Поставщик: {request['supplier_name']}\n\n"
-        f"💲 Стоимость: {int(request['sum'])} сум\n"
-        f"💲 Запрошенная сумма в валюте: {(request['sum'] / request['exchange_rate']) if request.get('exchange_rate', None) is not None else request['sum']}\n"
+        f"💲 Стоимость: {request_sum} сум\n"
+        f"💲 Запрошенная сумма в валюте: {requested_currency}\n"
         f"💵 Валюта: {request['currency']}\n"
         f"📈 Курс валюты: {request['exchange_rate']}\n"
         f"💳 Тип оплаты: {request['payment_type_name']}\n"
@@ -654,6 +695,12 @@ async def confirmation_handler(update: Update, context: ContextTypes.DEFAULT_TYP
         response = api_routes.create_request(body=data)
         if response.status_code == 200:
             request = response.json()
+            request_sum = format(int(request['sum']), ',').replace(',', ' ')
+            if request.get('exchange_rate', None) is not None:
+                requested_currency = format((request['sum'] / request['exchange_rate']), ',').replace(',', ' ')
+            else:
+                requested_currency = request_sum
+
             request_text = (
                 f"📌 Заявка #{request['number']}s\n\n"
                 f"📅 Дата заявки: {datetime.strptime(request['created_at'], '%Y-%m-%dT%H:%M:%S.%f%z').strftime('%d.%m.%Y')}\n"
@@ -663,8 +710,8 @@ async def confirmation_handler(update: Update, context: ContextTypes.DEFAULT_TYP
                 f"🛒 Закупщик: {request['buyer']}\n"
                 f"💰 Тип затраты: {request['expense_type']['name']}\n"
                 f"🏢 Поставщик: {request['supplier']}\n\n"
-                f"💲 Стоимость: {int(request['sum'])} сум\n"
-                f"💲 Запрошенная сумма в валюте: {(request['sum'] / request['exchange_rate']) if request.get('exchange_rate', None) is not None else request['sum']}\n"
+                f"💲 Стоимость: {request_sum} сум\n"
+                f"💲 Запрошенная сумма в валюте: {requested_currency}\n"
                 f"💵 Валюта: {request['currency']}\n"
                 f"📈 Курс валюты: {request['exchange_rate']}\n"
                 f"💳 Тип оплаты: {request['payment_type']['name']}\n"
