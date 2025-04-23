@@ -83,7 +83,20 @@ async def handle_callback_query(update: Update, context: ContextTypes.DEFAULT_TY
                 inline_keyboard=[
                     [InlineKeyboardButton(text="Не подтверждаю", callback_data="not_confirm")],
                     [InlineKeyboardButton(text="Нужно переговорить", callback_data="discuss")],
-                    [InlineKeyboardButton(text="Другое", callback_data="other")]
+                    [InlineKeyboardButton(text="Другое", callback_data="other")],
+                    [InlineKeyboardButton(text="Назад ⬅️", callback_data="back")]
+                ]
+            )
+        )
+
+    elif callback_data == "back":
+        await query.edit_message_reply_markup(
+            reply_markup=InlineKeyboardMarkup(
+                inline_keyboard=[
+                    [
+                        InlineKeyboardButton(text="Подтвердить", callback_data="confirm"),
+                        InlineKeyboardButton(text="Отказать", callback_data="refuse")
+                    ]
                 ]
             )
         )
