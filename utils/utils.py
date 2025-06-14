@@ -21,6 +21,12 @@ def format_phone_number(phone: str) -> str:
 
 
 
+def is_valid_date(date_str):
+    pattern = r"^(0[1-9]|[12][0-9]|3[01])\.(0[1-9]|1[0-2])\.(\d{4})$"
+    return bool(re.match(pattern, date_str))
+
+
+
 def error_sender(error_message):
     payload = {
         "chat_id": ERROR_GROUP,

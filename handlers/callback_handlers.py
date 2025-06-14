@@ -7,7 +7,7 @@ from telegram import Update, InlineQueryResultArticle, InputTextMessageContent, 
 from telegram.ext import CallbackContext, ContextTypes
 
 from configs.variables import APPROVE_GROUP, CEO
-from handlers.conversation_handlers import HOME, MY_REQUESTS
+from handlers.conversation_handlers import HOME, MY_REQUESTS, PAYMENT_TIME
 from keyboards import client_keyboards
 from utils.api_requests import api_routes
 from utils.utils import error_sender
@@ -77,6 +77,9 @@ async def handle_callback_query(update: Update, context: ContextTypes.DEFAULT_TY
     client = response.json()
     client = client['items'][0]
 
+    context.user_data.pop("new_request", None)
+    context.user_data.pop("request_details", None)
+
     if callback_data == "refuse":
         await query.edit_message_reply_markup(
             reply_markup=InlineKeyboardMarkup(
@@ -94,7 +97,7 @@ async def handle_callback_query(update: Update, context: ContextTypes.DEFAULT_TY
             reply_markup=InlineKeyboardMarkup(
                 inline_keyboard=[
                     [
-                        InlineKeyboardButton(text="Подтвердить", callback_data="confirm"),
+                        InlineKeyboardButton(text="Одобрить", callback_data="confirm"),
                         InlineKeyboardButton(text="Отказать", callback_data="refuse")
                     ]
                 ]
@@ -146,6 +149,40 @@ async def handle_callback_query(update: Update, context: ContextTypes.DEFAULT_TY
         await query.answer()
 
     elif callback_data == "confirm":
+        await query.edit_message_reply_markup(
+            reply_markup=InlineKeyboardMarkup(
+                inline_keyboard=[
+                    [InlineKeyboardButton(text="Отложить", callback_data="delay")],
+                    [InlineKeyboardButton(text="Подтвердить ✅", callback_data="pass")],
+                    [InlineKeyboardButton(text="Назад ⬅️", callback_data="back")]
+                ]
+            )
+        )
+
+    elif callback_data == "delay":
+        await query.answer()
+        await query.message.reply_text(
+            text="Введите дату оплаты в формате:  дд.мм.гггг (08.05.2025)"
+        )
+        context.user_data["request_info"] = {}
+        context.user_data["request_info"]["text"] = (
+            f"{message_text}\n\n"
+            f"Подтверждено  ✅\n"
+            f"Отложено  ⏳"
+        )
+        context.user_data["request_info"]["message_id"] = query.message.message_id
+        context.user_data["request_info"]["client_tg_id"] = request["client"]["tg_id"]
+        context.user_data["request_info"]["number"] = request["number"]
+
+        context.user_data["request_updates"] = {}
+        context.user_data["request_updates"]["id"] = request_id
+        context.user_data["request_updates"]["approved"] = True
+        context.user_data["request_updates"]["status"] = 6
+        context.user_data["request_updates"]["client_id"] = client["id"]
+
+        return PAYMENT_TIME
+
+    elif callback_data == "pass":
         body = {
             "id": request_id,
             "approved": True,
@@ -174,9 +211,10 @@ async def handle_callback_query(update: Update, context: ContextTypes.DEFAULT_TY
                     text=f"Заявка #{request['number']}s одобрена !"
                 )
             except Exception as e:
-                print(e)
+                error_sender(error_message=f"FINANCE BOT: \n{e}")
         else:
             error_sender(error_message=f"FINANCE BOT: \n{response.text}")
+
 
 
 async def my_requests_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -210,7 +248,7 @@ async def my_requests_handler(update: Update, context: ContextTypes.DEFAULT_TYPE
         status = "4,5"
         text = "Ваши заявки в архиве"
     elif part_name == "Актив":
-        status = "0,1,2,3"
+        status = "0,1,2,3,6"
         text = "Ваши активные заявки"
 
     await update.message.reply_text(text)
@@ -225,20 +263,23 @@ async def my_requests_handler(update: Update, context: ContextTypes.DEFAULT_TYPE
         f"🛒 Заказчик: {request['buyer']}\n"
         f"💰 Тип затраты: {request['expense_type']['name']}\n"
         f"🏢 Поставщик: {request['supplier']}\n\n"
-        f"💲 Стоимость: {format(int(request['sum']), ',').replace(',', ' ')} сум\n"
-        f"💲 Запрошенная сумма в валюте: {format((float(request['sum']) / float(request['exchange_rate'])), ',').replace(',', ' ') if request.get('exchange_rate', None) is not None else format(int(request['sum']), ',').replace(',', ' ')}\n"
+        f"💎 Стоимость: <b>{format(int(request['sum']), ',').replace(',', ' ')} сум</b>\n"
+        f"💎 Запрошенная сумма в валюте: <b>{format((float(request['sum']) / float(request['exchange_rate'])), ',').replace(',', ' ') if request.get('exchange_rate', None) is not None else format(int(request['sum']), ',').replace(',', ' ')}</b>\n"
         f"💵 Валюта: {request.get('currency', '')}\n"
         f"📈 Курс валюты: {request.get('exchange_rate', '')}\n"
         f"💳 Тип оплаты: {request['payment_type']['name']}\n"
         f"💳 Карта перевода: {request['payment_card'] if request['payment_card'] is not None else ''}\n"
-        f"📜 № Заявки в SAP: {request['sap_code']}\n\n"
+        f"📜 № Заявки в SAP: {request['sap_code']}\n"
+        f"🕓 Дата оплаты: {datetime.strptime(request['payment_time'], '%Y-%m-%dT%H:%M:%S%z').strftime('%d.%m.%Y') if request['payment_time'] is not None else ''}\n"
+        f"💸 Фирма-плательщик: {request['payer_company']['name'] if request['payer_company'] is not None else ''}\n\n"
         f"📝 Комментарии: {request['description']}"
         for request in requests
     ]
     for message in request_messages:
         await update.message.reply_text(
             text=message,
-            reply_markup=ReplyKeyboardMarkup(keyboard=[["Назад ⬅️"]], resize_keyboard=True)
+            reply_markup=ReplyKeyboardMarkup(keyboard=[["Назад ⬅️"]], resize_keyboard=True),
+            parse_mode='HTML'
         )
 
     return MY_REQUESTS

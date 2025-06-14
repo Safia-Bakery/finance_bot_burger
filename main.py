@@ -15,10 +15,13 @@ def main() -> None:
     application = Application.builder().token(BOT_TOKEN).persistence(persistence).build()
 
     # application.add_handler(InlineQueryHandler(inline_handler))
-    application.add_handler(CallbackQueryHandler(handle_callback_query))
+    # application.add_handler(CallbackQueryHandler(handle_callback_query))
 
     conv_handler = ConversationHandler(
-        entry_points=[CommandHandler('start', start_command)],
+        entry_points=[
+            CallbackQueryHandler(handle_callback_query),
+            CommandHandler('start', start_command),
+        ],
         states={
             AUTH: [MessageHandler(filters.TEXT & ~filters.COMMAND, auth)],
             USER_REG: [
@@ -34,7 +37,9 @@ def main() -> None:
             DESCRIPTION: [MessageHandler(filters.TEXT & ~filters.COMMAND, description_handler)],
             CURRENCY: [MessageHandler(filters.TEXT & ~filters.COMMAND, currency_handler)],
             SUM: [MessageHandler(filters.TEXT & ~filters.COMMAND, sum_handler)],
+            PAYMENT_TIME: [MessageHandler(filters.TEXT & ~filters.COMMAND, payment_time_handler)],
             PAYMENT_TYPE: [MessageHandler(filters.TEXT & ~filters.COMMAND, payment_type_handler)],
+            PAYER_COMPANY: [MessageHandler(filters.TEXT & ~filters.COMMAND, payer_company_handler)],
             PAYMENT_CARD: [
                 MessageHandler(filters.TEXT & ~filters.COMMAND, payment_card_handler)
             ],
@@ -52,7 +57,9 @@ def main() -> None:
         allow_reentry=True,
         name="my_conversation",
         persistent=True,
-        per_chat=True
+        per_user=True,
+        per_chat=True,
+        per_message=False
     )
 
     application.add_handler(conv_handler)

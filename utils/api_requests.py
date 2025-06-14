@@ -68,9 +68,14 @@ class ApiRoutes:
             response = requests.get(f"{self.base_url}/departments", headers=self.headers)
         return response.json()
 
-    def get_budget_balance(self, department_id, expense_type_id):
+    def get_budget_balance(self, department_id, expense_type_id, start_date, finish_date):
         response = requests.get(f"{self.base_url}/budget-balance", headers=self.headers,
-                                params={'department_id': department_id, 'expense_type_id': expense_type_id}
+                                params={
+                                    'department_id': department_id,
+                                    'expense_type_id': expense_type_id,
+                                    "start_date": start_date,
+                                    "finish_date": finish_date
+                                }
                                 )
         return response.json()
 
@@ -118,11 +123,19 @@ class ApiRoutes:
             response = requests.get(f"{self.base_url}/payment-types", headers=self.headers)
         return response.json()
 
-    def upload_files(self, files,file_name):
-        # self.headers["Content-Type"] = "multipart/form-data"
+    def get_payer_companies(self, name: Optional[str] = None):
+        if name is not None:
+            response = requests.get(f"{self.base_url}/payer-companies", headers=self.headers, params={'name': name})
+        else:
+            response = requests.get(f"{self.base_url}/payer-companies", headers=self.headers)
+        return response
+
+
+    def upload_files(self, files):
         self.headers["Content-Type"] = None
-        self.headers['filename'] = quote(file_name)
-        response = requests.post(f"{self.base_url}/files/upload/bot/2", headers=self.headers, files=files)
+        # self.headers['filename'] = quote(file_name)
+        # response = requests.post(f"{self.base_url}/files/upload/bot/2", headers=self.headers, files=files)
+        response = requests.post(f"{self.base_url}/files/upload", headers=self.headers, files=files)
         return response
 
     def create_request(self, body):
