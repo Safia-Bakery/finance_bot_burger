@@ -68,13 +68,11 @@ class ApiRoutes:
             response = requests.get(f"{self.base_url}/departments", headers=self.headers)
         return response.json()
 
-    def get_budget_balance(self, department_id, expense_type_id, start_date, finish_date):
+    def get_budget_balance(self, department_id, expense_type_id):
         response = requests.get(f"{self.base_url}/budget-balance", headers=self.headers,
                                 params={
                                     'department_id': department_id,
-                                    'expense_type_id': expense_type_id,
-                                    "start_date": start_date,
-                                    "finish_date": finish_date
+                                    'expense_type_id': expense_type_id
                                 }
                                 )
         return response.json()

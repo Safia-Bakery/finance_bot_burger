@@ -239,9 +239,7 @@ async def expense_type_handler(update: Update, context: ContextTypes.DEFAULT_TYP
 
     budget_balance = api_routes.get_budget_balance(
         department_id=context.user_data["new_request"]["department_id"],
-        expense_type_id=context.user_data["new_request"]["expense_type_id"],
-        start_date=datetime(year=2025, month=5, day=1).date(),
-        finish_date=datetime(year=2025, month=5, day=31).date()
+        expense_type_id=context.user_data["new_request"]["expense_type_id"]
     )
     context.user_data["request_details"]["budget_balance"] = budget_balance['value'] if budget_balance else None
 
