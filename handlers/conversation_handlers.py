@@ -208,6 +208,7 @@ async def department_handler(update: Update, context: ContextTypes.DEFAULT_TYPE)
     context.user_data["new_request"]["status"] = 0
     context.user_data["new_request"]["department_id"] = department_id
     context.user_data["request_details"]["department_name"] = department_name
+    context.user_data["request_details"]["department_purchasable"] = department["purchasable"]
     # context.user_data["request_details"]["over_budget"] = bool(over_budget == "True")
     context.user_data["request_details"]["over_budget"] = over_budget
 
@@ -233,9 +234,11 @@ async def expense_type_handler(update: Update, context: ContextTypes.DEFAULT_TYP
         return DEPARTMENTS
 
     response = api_routes.get_expense_types(name=expense_type_name)
-    expense_type_id = response[0]["id"]
+    expense_type = response[0]
+    expense_type_id = expense_type["id"]
     context.user_data["new_request"]["expense_type_id"] = expense_type_id
     context.user_data["request_details"]["expense_type_name"] = expense_type_name
+    context.user_data["request_details"]["expense_type_purchasable"] = expense_type["purchasable"]
 
     budget_balance = api_routes.get_budget_balance(
         department_id=context.user_data["new_request"]["department_id"],
@@ -827,6 +830,9 @@ async def confirmation_handler(update: Update, context: ContextTypes.DEFAULT_TYP
             text=keyboard['text'],
             reply_markup=keyboard['markup']
         )
+
+        if context.user_data["request_details"]["department_purchasable"] is True and context.user_data["request_details"]["expense_type_purchasable"] is True:
+            context.user_data["new_request"]["purchase_approved"] = False
 
         data = context.user_data["new_request"]
         response = api_routes.create_request(body=data)
