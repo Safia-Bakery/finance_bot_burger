@@ -21,7 +21,14 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> U
             context.user_data["client"]["id"] = client["id"]
             context.user_data["client"]["fullname"] = client["fullname"]
             context.user_data["client"]["phone"] = client["phone"]
-            keyboard = (await client_keyboards.home_keyboard())
+            context.user_data["client"]["web_user"] = client["web_user"]
+            client_id = client["id"]
+            # client_id = "dc247992-0cd9-4c39-ab7b-c9f31a9a50e9"
+            if client["web_user"] is True and client["department"]:
+                keyboard = (await client_keyboards.home_keyboard(client_id=client_id))
+            else:
+                keyboard = (await client_keyboards.home_keyboard())
+
             await update.message.reply_text(
                 text=keyboard['text'],
                 reply_markup=keyboard['markup']

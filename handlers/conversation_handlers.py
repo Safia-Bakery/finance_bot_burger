@@ -12,7 +12,7 @@ from telegram import (
 )
 from telegram.ext import ContextTypes
 
-from configs.variables import APPROVE_GROUP, PROJECT_PATH
+from configs.variables import APPROVE_GROUP, PROJECT_PATH, PURCHASE_GROUP
 from keyboards import client_keyboards
 from utils.api_requests import api_routes
 from utils.utils import format_phone_number, error_sender, is_valid_date
@@ -873,7 +873,7 @@ async def confirmation_handler(update: Update, context: ContextTypes.DEFAULT_TYP
                     reply_markup=InlineKeyboardMarkup(
                         inline_keyboard=[
                             [
-                                InlineKeyboardButton(text="Подтвердить", callback_data="confirm"),
+                                InlineKeyboardButton(text="Одобрить", callback_data="confirm"),
                                 InlineKeyboardButton(text="Отказать", callback_data="refuse"),
                             ]
                         ]
@@ -903,6 +903,8 @@ async def confirmation_handler(update: Update, context: ContextTypes.DEFAULT_TYP
                 text = f"Ваша заявка #{request['number']}s принята на обработку, как финансовый отдел примет её, вы получите срок оплаты"
                 await update.message.reply_text(text)
                 department_head = request["department"]["head"]
+                purchasable_department = request["department"]["purchasable"]
+                purchasable_expense = request["expense_type"]["purchasable"]
                 if department_head:
                     chat_id = department_head["tg_id"]
                     try:
@@ -947,6 +949,43 @@ async def confirmation_handler(update: Update, context: ContextTypes.DEFAULT_TYP
                                     error_sender(
                                         error_message=f"{error_message}\n\n{e}"
                                     )
+                if purchasable_department is True:
+                    if purchasable_expense is True:
+                        chat_id = PURCHASE_GROUP
+                        try:
+                            sent_message = await context.bot.send_message(
+                                chat_id=chat_id,
+                                text=request_text,
+                                parse_mode='HTML'
+                            )
+                        except Exception as e:
+                            error_message = (
+                                f"FINANCE BOT !!!\n"
+                                f"Couldn't send request № {request['number']} to purchase group:"
+                            )
+                            error_sender(
+                                error_message=f"{error_message}\n\n{e}"
+                            )
+
+                        if request["contract"]:
+                            files = request["contract"]["file"]
+                            for file in files:
+                                file_paths = file["file_paths"]
+                                for file_path in file_paths:
+                                    try:
+                                        await context.bot.send_document(
+                                            chat_id=chat_id,
+                                            document=f"{PROJECT_PATH}/{file_path}",
+                                            reply_to_message_id=sent_message.message_id
+                                        )
+                                    except Exception as e:
+                                        error_message = (
+                                            f"FINANCE BOT !!!\n"
+                                            f"Couldn't send request № {request['number']} contract files to purchase group:"
+                                        )
+                                        error_sender(
+                                            error_message=f"{error_message}\n\n{e}"
+                                        )
 
         else:
             error_sender(error_message=f"FINANCE BOT: \n{response.text}")

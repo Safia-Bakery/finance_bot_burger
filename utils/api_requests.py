@@ -167,3 +167,4 @@ class ApiRoutes:
 
 api_routes = ApiRoutes()
 api_routes.login()
+access_token = api_routes.access_token['access_token']

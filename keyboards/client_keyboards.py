@@ -1,10 +1,15 @@
-from telegram import ReplyKeyboardMarkup, KeyboardButton
-from utils.api_requests import api_routes
+from typing import Optional
+from uuid import UUID
+
+from telegram import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
+
+from configs.variables import WEB_URL
+from utils.api_requests import api_routes, access_token
 from datetime import datetime, date
 import calendar
 
 
-async def home_keyboard():
+async def home_keyboard(client_id: Optional[str] = None):
     reply_keyboard = [
         [
             KeyboardButton(text="Подать заявку"),
@@ -14,10 +19,32 @@ async def home_keyboard():
             KeyboardButton(text="Регламент подачи")
         ]
     ]
+    if client_id is not None:
+        url = f"{WEB_URL}?client={client_id}&token={access_token}"
+        reply_keyboard.append(
+            [
+                KeyboardButton(text="Кабинет руководителя", web_app=WebAppInfo(url=url))
+            ]
+        )
     text = "Главная страница"
     reply_markup = ReplyKeyboardMarkup(reply_keyboard, resize_keyboard=True)
     data_dict = {'text': text, 'markup': reply_markup}
     return data_dict
+
+
+
+async def home_inline_keyboard(client_id):
+    url = f"{WEB_URL}?client={client_id}&token={access_token}"
+    inline_keyboard = [
+        [
+            InlineKeyboardButton(text="Домой", web_app=WebAppInfo(url=url))
+        ]
+    ]
+    text = "Главная страница"
+    reply_markup = InlineKeyboardMarkup(inline_keyboard=inline_keyboard)
+    data_dict = {'text': text, 'markup': reply_markup}
+    return data_dict
+
 
 
 async def departments_keyboard():
