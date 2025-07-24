@@ -73,6 +73,10 @@ async def handle_callback_query(update: Update, context: ContextTypes.DEFAULT_TY
     request = response.json()['items'][0]
     request_id = str(request['id'])
 
+    if request['status'] == 5:
+        await query.answer(text="Данная завка уже закрыта !", show_alert=True)
+        return None
+
     response = api_routes.get_client(tg_id)
     client = response.json()
     client = client['items'][0]
