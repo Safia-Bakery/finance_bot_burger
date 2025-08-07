@@ -65,12 +65,12 @@ async def expense_types_keyboard(department_id):
     today = date.today()
 
     # First day of current month
-    # first_day = today.replace(day=1)
-    first_day = datetime(year=2025, month=7, day=1).date()
+    first_day = today.replace(day=1)
+    # first_day = datetime(year=2025, month=7, day=1).date()
 
     # Last day of current month
-    # last_day = today.replace(day=calendar.monthrange(today.year, today.month)[1])
-    last_day = datetime(year=2025, month=7, day=31).date()
+    last_day = today.replace(day=calendar.monthrange(today.year, today.month)[1])
+    # last_day = datetime(year=2025, month=7, day=31).date()
 
     objs = api_routes.get_expense_types(department_id=department_id, start_date=first_day, finish_date=last_day)
     # objs = api_routes.get_expense_types()
