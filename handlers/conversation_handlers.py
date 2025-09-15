@@ -576,6 +576,12 @@ async def payment_time_handler(update: Update, context: ContextTypes.DEFAULT_TYP
         return PAYMENT_TIME
 
     date_obj = datetime.strptime(user_message, "%d.%m.%Y")
+    print("date_obj: ", date_obj, type(date_obj))
+
+    # Format it as "YYYY-MM-DD"
+    formatted_date = date_obj.strftime("%Y-%m-%d")
+    print("formatted_date: ", formatted_date, type(formatted_date))
+
     if date_obj.date() < date.today():
         await update.message.reply_text(
             text='Вы не можете ввести прошедшую дату !',
@@ -586,8 +592,8 @@ async def payment_time_handler(update: Update, context: ContextTypes.DEFAULT_TYP
     budget_balance = api_routes.get_budget_balance(
         department_id=context.user_data["new_request"]["department_id"],
         expense_type_id=context.user_data["new_request"]["expense_type_id"],
-        start_date=date_obj.date(),
-        finish_date=date_obj.date()
+        start_date=formatted_date,
+        finish_date=formatted_date
     )
     context.user_data["request_details"]["budget_balance"] = budget_balance['value'] if budget_balance else 0
 
