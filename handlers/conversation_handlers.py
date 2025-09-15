@@ -243,16 +243,6 @@ async def expense_type_handler(update: Update, context: ContextTypes.DEFAULT_TYP
     context.user_data["request_details"]["expense_type_name"] = expense_type_name
     context.user_data["request_details"]["expense_type_purchasable"] = expense_type["purchasable"]
 
-    budget_balance = api_routes.get_budget_balance(
-        department_id=context.user_data["new_request"]["department_id"],
-        expense_type_id=context.user_data["new_request"]["expense_type_id"]
-    )
-    context.user_data["request_details"]["budget_balance"] = budget_balance['value'] if budget_balance else 0
-
-    await update.message.reply_text(
-        text=f"Ваш текущий бюджет по выбранному типу затраты: \n<b>{format(budget_balance['value'], ',').replace(',', ' ') if budget_balance else 0} сум</b>",
-        parse_mode='HTML'
-    )
 
     if expense_type_name == "Командировочные расходы":
         keyboard = (await client_keyboards.countries_keyboard())
@@ -592,6 +582,20 @@ async def payment_time_handler(update: Update, context: ContextTypes.DEFAULT_TYP
             reply_markup=ReplyKeyboardMarkup(keyboard=[["Назад ⬅️"]], resize_keyboard=True, one_time_keyboard=True)
         )
         return PAYMENT_TIME
+
+    budget_balance = api_routes.get_budget_balance(
+        department_id=context.user_data["new_request"]["department_id"],
+        expense_type_id=context.user_data["new_request"]["expense_type_id"],
+        start_date=date_obj.date(),
+        finish_date=date_obj.date()
+    )
+    context.user_data["request_details"]["budget_balance"] = budget_balance['value'] if budget_balance else 0
+
+    await update.message.reply_text(
+        text=f"Ваш текущий бюджет по выбранному типу затраты: \n<b>{format(budget_balance['value'], ',').replace(',', ' ') if budget_balance else 0} сум</b>",
+        parse_mode='HTML'
+    )
+
 
     # Format it as "YYYY-MM-DD"
     formatted_date = date_obj.strftime("%Y-%m-%d")
