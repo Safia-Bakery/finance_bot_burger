@@ -211,14 +211,14 @@ async def handle_callback_query(update: Update, context: ContextTypes.DEFAULT_TY
             #     )
 
             try:
-                print(request['payment_time'], type(request['payment_time']))
-                # date_obj = datetime.strptime(request['payment_time'], "%Y-%m-%d")
-                # formatted_date = date_obj.strftime("%Y-%m-%d")
+                # 2025-09-27T00:00:00Z <class 'str'>
+                date_obj = datetime.strptime(request['payment_time'], "%Y-%m-%dT%H:%M:%SZ")
+                formatted_date = date_obj.strftime("%Y-%m-%d")
                 balance_response = api_routes.get_budget_balance(
                     department_id=request['department']['id'],
                     expense_type_id=request['expense_type']['id'],
-                    start_date=request['payment_time'].date(),
-                    finish_date=request['payment_time'].date()
+                    start_date=formatted_date,
+                    finish_date=formatted_date
                 )
                 balance_sum = balance_response["value"] if balance_response else 0
                 balance_sum = format(balance_sum, ',').replace(',', ' ')
