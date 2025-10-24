@@ -238,7 +238,9 @@ async def handle_callback_query(update: Update, context: ContextTypes.DEFAULT_TY
         elif response.status_code == 400:
             await query.answer(text="Заявка не может быть одобрена, недостаточно средств в бюджете ! ❌", show_alert=True)
         else:
-            error_sender(error_message=f"FINANCE BOT: \n{response.text}")
+            json_response = response.json()
+            await query.answer(text=json_response["detail"], show_alert=True)
+            error_sender(error_message=f'FINANCE BOT: \n{json_response["detail"]}')
 
 
 
