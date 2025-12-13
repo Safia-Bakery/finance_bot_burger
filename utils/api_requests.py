@@ -146,6 +146,13 @@ class ApiRoutes:
             response = requests.get(f"{self.base_url}/payer-companies", headers=self.headers)
         return response
 
+    def get_currencies(self, name: Optional[str] = None):
+        if name is not None:
+            response = requests.get(f"{self.base_url}/currencies", headers=self.headers, params={'name': name})
+        else:
+            response = requests.get(f"{self.base_url}/currencies", headers=self.headers)
+        return response
+
 
     def upload_files(self, files):
         self.headers["Content-Type"] = None

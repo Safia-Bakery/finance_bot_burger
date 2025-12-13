@@ -130,7 +130,10 @@ async def payment_types_keyboard():
 
 
 async def currency_keyboard():
-    currencies = ["Сум", "Доллар", "Евро", "Тенге", "Фунт", "Рубль", "Другое"]
+    # currencies = ["Сум", "Доллар", "Евро", "Тенге", "Фунт", "Рубль", "Другое"]
+    response = api_routes.get_currencies()
+    currencies = response.json()
+    currencies = [currency["name"] for currency in currencies]
     reply_keyboard = [["Назад ⬅️"]]
     for i in range(0, len(currencies), 3):
         reply_keyboard.append(currencies[i: i+3])
