@@ -53,7 +53,7 @@ def main() -> None:
                 MessageHandler(filters.PHOTO, contract_handler),
                 MessageHandler(filters.TEXT & ~filters.COMMAND, contract_handler),
             ],
-            SAP_CODE: [MessageHandler(filters.TEXT & ~filters.COMMAND, sap_code_handler)],
+            # SAP_CODE: [MessageHandler(filters.TEXT & ~filters.COMMAND, sap_code_handler)],
             CONTRACT_NUMBER: [MessageHandler(filters.TEXT & ~filters.COMMAND, contract_number_handler)],
             RECEIPT: [
                 MessageHandler(filters.Document.ALL, receipt_handler),

@@ -1,8 +1,13 @@
 import re
+from datetime import datetime
 
 import requests
+from telegram import Update, ReplyKeyboardMarkup
+from telegram.ext import ContextTypes
 
 from configs.variables import ERROR_GROUP, ERROR_BOT
+from handlers.conversation_handlers import HOME, CONFIRM
+from keyboards import client_keyboards
 
 
 def format_phone_number(phone: str) -> str:
@@ -45,3 +50,67 @@ def error_sender(error_message):
     else:
         print("Response text: ", response.text)
         return None
+
+
+
+async def pre_confirmation_process(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    request = context.user_data["request_details"]
+    request_sum = format(int(request['sum']), ',').replace(',', ' ')
+    if request.get('exchange_rate', None) is not None:
+        requested_currency = format((request['sum'] / request['exchange_rate']), ',').replace(',', ' ')
+    else:
+        requested_currency = request_sum
+
+    request_text = (
+        f"📅 Дата заявки: {datetime.now().date().strftime('%d.%m.%Y')}\n"
+        f"📍 Отдел: {request['department_name']}\n"
+        f"👤 Заявитель: {context.user_data['client']['fullname']}\n"
+        f"📞 Номер заявителя: {context.user_data['client']['phone']}\n"
+        f"🛒 Заказчик: {request['buyer_name']}\n"
+        f"💰 Тип затраты: {request['expense_type_name']}\n"
+        f"🏢 Поставщик: {request['supplier_name']}\n\n"
+        f"💎 Стоимость: <b>{request_sum} сум</b>\n"
+        f"💎 Запрошенная сумма в валюте: <b>{requested_currency}</b>\n"
+        f"💵 Валюта: {request['currency']}\n"
+        f"📈 Курс валюты: {request['exchange_rate']}\n"
+        f"💳 Тип оплаты: {request['payment_type_name']}\n"
+        f"💳 Карта перевода: {request.get('payment_card', '')}\n"
+        f"📜 № Заявки в SAP: {request['sap_code']}\n"
+        f"🕓 Дата оплаты: {request['payment_time'].strftime('%d.%m.%Y')}\n"
+        f"💸 Фирма-плательщик: {request.get('payer_company_name', '')}\n\n"
+        f"📝 Комментарии: {request['description']}"
+    )
+    city_name = context.user_data.get("request_details").get("city")
+    trip_days = context.user_data.get("request_details").get("trip_days")
+    if city_name and trip_days:
+        request_text += (f"\n✈️ Коммандировка по направлению: {city_name}"
+                         f"\n⏳ Количество дней: {trip_days}")
+    budget_balance = context.user_data["request_details"]["budget_balance"]
+    context.user_data["request_details"]["send_ceo"] = False
+
+    if float(context.user_data["request_details"]["sum"]) > budget_balance and context.user_data["request_details"][
+        "over_budget"] == False:
+        await update.message.reply_text(
+            text="К сожалению, на балансе бюджета недостаточно средств для покрытия запрошенной суммы."
+        )
+        keyboard = (await client_keyboards.home_keyboard())
+        await update.message.reply_text(
+            text=keyboard['text'],
+            reply_markup=keyboard['markup']
+        )
+        return HOME
+
+    else:
+        if float(context.user_data["request_details"]["sum"]) > budget_balance and \
+                context.user_data["request_details"]["over_budget"] == True:
+            context.user_data["request_details"]["send_ceo"] = True
+
+        await update.message.reply_text(
+            text='Проверьте свою заявку ещё раз, если всё правильно, подтвердите её.'
+        )
+        await update.message.reply_text(
+            text=request_text,
+            reply_markup=ReplyKeyboardMarkup(keyboard=[["Назад ⬅️"], ["Подтвердить"]], resize_keyboard=True),
+            parse_mode='HTML'
+        )
+        return CONFIRM
