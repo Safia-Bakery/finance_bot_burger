@@ -49,7 +49,7 @@ from utils.utils import format_phone_number, error_sender, is_valid_date, pre_co
 
 async def auth(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     user_password = update.message.text
-    if user_password == "safia12":
+    if user_password == "Embassy12":
         await update.message.reply_text(
             text='Пройдите регистрацию. \n'
                  'Укажите своё имя'
