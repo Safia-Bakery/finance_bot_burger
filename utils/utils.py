@@ -6,7 +6,6 @@ from telegram import Update, ReplyKeyboardMarkup
 from telegram.ext import ContextTypes
 
 from configs.variables import ERROR_GROUP, ERROR_BOT
-from handlers.conversation_handlers import HOME, CONFIRM
 from keyboards import client_keyboards
 
 
@@ -98,7 +97,7 @@ async def pre_confirmation_process(update: Update, context: ContextTypes.DEFAULT
             text=keyboard['text'],
             reply_markup=keyboard['markup']
         )
-        return HOME
+        return 2
 
     else:
         if float(context.user_data["request_details"]["sum"]) > budget_balance and \
@@ -113,4 +112,4 @@ async def pre_confirmation_process(update: Update, context: ContextTypes.DEFAULT
             reply_markup=ReplyKeyboardMarkup(keyboard=[["Назад ⬅️"], ["Подтвердить"]], resize_keyboard=True),
             parse_mode='HTML'
         )
-        return CONFIRM
+        return 21
